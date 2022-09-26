@@ -74,7 +74,7 @@ public class Main {
         // 由 IR 生成汇编
         final var asmGenerator = new AssemblyGenerator();
         asmGenerator.loadIR(instructions);
-        asmGenerator.run();
+        asmGenerator.run();test
         asmGenerator.dump(FilePathConfig.ASSEMBLY_LANGUAGE_PATH);
     }
 }
