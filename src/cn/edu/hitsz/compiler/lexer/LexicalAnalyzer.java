@@ -55,8 +55,6 @@ public class LexicalAnalyzer {
             i = DFA(i, j, 0, Boolean.FALSE);
         }
         tokens.add(Token.simple(TokenKind.eof()));
-//        System.out.println("result = ");
-//        System.out.println(result);
     }
 
     private int DFA(int i, int j, int state, Boolean is_finished) {
