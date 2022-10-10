@@ -4,7 +4,7 @@ out
 
 # follow https://stackoverflow.com/a/5534865
 !data/out
-data/out/*
+#data/out/*
 !data/out/.gitkeep
 
 template/

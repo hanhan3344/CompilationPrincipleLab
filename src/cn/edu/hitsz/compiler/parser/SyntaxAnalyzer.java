@@ -114,33 +114,34 @@ public class SyntaxAnalyzer {
 //            System.out.println("nowToken = "+token+"nowStatus = "+nowStatus+"nowAction = "+nowAction);
             switch (nowAction.getKind()){
                 case Shift -> {
-                    System.out.println("IN SHIFT nowToken = "+token+"nowStatus = "+nowStatus+"nowAction = "+nowAction);
+//                    System.out.println("IN SHIFT nowToken = "+token+"nowStatus = "+nowStatus+"nowAction = "+nowAction);
                     symbolStack.push(new Symbol(token));
                     statusStack.push(nowAction.getStatus());
                     callWhenInShift(statusStack.peek(), symbolStack.peek().getToken());
                     i++;
                 }
                 case Reduce -> {
-                    System.out.println("IN REDUCE BEGIN nowToken = "+token+"nowStatus = "+nowStatus+"nowAction = "+nowAction);
+//                    System.out.println("IN REDUCE BEGIN nowToken = "+token+"nowStatus = "+nowStatus+"nowAction = "+nowAction);
                     final var production = nowAction.getProduction();
 
                     int sizeOfBody = production.body().size();
-                    System.out.println("production.body().size() = "+production.body().size());
+//                    System.out.println("production.body().size() = "+production.body().size());
                     for(int j = 0 ; j < sizeOfBody ; j++){
                         symbolStack.pop();
                         statusStack.pop();
                     }
                     symbolStack.push(new Symbol(null, production.head()));
-                    System.out.println("statusStack.peek() = "+statusStack.peek()+"symbolStack.peek().getNonterminal() = "+ symbolStack.peek().getNonterminal());
-                    System.out.println("goto = "+ lrTable.getGoto(statusStack.peek(), symbolStack.peek().getNonterminal()));
+//                    System.out.println("statusStack.peek() = "+statusStack.peek()+"symbolStack.peek().getNonterminal() = "+ symbolStack.peek().getNonterminal());
+//                    System.out.println("goto = "+ lrTable.getGoto(statusStack.peek(), symbolStack.peek().getNonterminal()));
                     statusStack.push(lrTable.getGoto(statusStack.peek(), symbolStack.peek().getNonterminal()));
                     callWhenInReduce(statusStack.peek(), production);
-                    System.out.println("IN REDUCE END nowToken = "+token+" nowStatusStack = "+statusStack+" nowSymbolStackPeek() = "+symbolStack.peek().getNonterminal());
+//                    System.out.println("IN REDUCE END nowToken = "+token+" nowStatusStack = "+statusStack+" nowSymbolStackPeek() = "+symbolStack.peek().getNonterminal());
                 }
                 case Accept -> {
-                    System.out.println("IN ACCEPT nowToken = "+token+"nowStatus = "+nowStatus+"nowAction = "+nowAction);
-                    System.out.println("Success");
+//                    System.out.println("IN ACCEPT nowToken = "+token+"nowStatus = "+nowStatus+"nowAction = "+nowAction);
+//                    System.out.println("Success");
                     flag = Boolean.TRUE;
+                    callWhenInAccept(statusStack.peek());
                 }
             }
         }
