@@ -22,7 +22,6 @@ public class LexicalAnalyzer {
 
     private final ArrayList<Token> tokens = new ArrayList<>();
 
-    public ArrayList<String> result = new ArrayList<>();
     public LexicalAnalyzer(SymbolTable symbolTable) {
         this.symbolTable = symbolTable;
     }

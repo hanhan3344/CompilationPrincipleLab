@@ -1,14 +1,12 @@
 package cn.edu.hitsz.compiler.parser;
 
-import cn.edu.hitsz.compiler.NotImplementedException;
 import cn.edu.hitsz.compiler.lexer.Token;
-import cn.edu.hitsz.compiler.parser.table.LRTable;
-import cn.edu.hitsz.compiler.parser.table.Production;
-import cn.edu.hitsz.compiler.parser.table.Status;
+import cn.edu.hitsz.compiler.parser.table.*;
 import cn.edu.hitsz.compiler.symtab.SymbolTable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Stack;
 
 //TODO: 实验二: 实现 LR 语法分析驱动程序
 
@@ -24,6 +22,11 @@ public class SyntaxAnalyzer {
     private final SymbolTable symbolTable;
     private final List<ActionObserver> observers = new ArrayList<>();
 
+    private ArrayList<Token> tokens = new ArrayList<>();
+    private LRTable lrTable;
+
+    private Stack<Status> statusStack = new Stack<Status>();
+    private Stack<Symbol> symbolStack = new Stack<Symbol>();
 
     public SyntaxAnalyzer(SymbolTable symbolTable) {
         this.symbolTable = symbolTable;
@@ -79,14 +82,16 @@ public class SyntaxAnalyzer {
         // 你可以自行选择要如何存储词法单元, 譬如使用迭代器, 或是栈, 或是干脆使用一个 list 全存起来
         // 需要注意的是, 在实现驱动程序的过程中, 你会需要面对只读取一个 token 而不能消耗它的情况,
         // 在自行设计的时候请加以考虑此种情况
-        throw new NotImplementedException();
+//        throw new NotImplementedException();
+        this.tokens = (ArrayList<Token>) tokens;
     }
 
     public void loadLRTable(LRTable table) {
         // TODO: 加载 LR 分析表
         // 你可以自行选择要如何使用该表格:
         // 是直接对 LRTable 调用 getAction/getGoto, 抑或是直接将 initStatus 存起来使用
-        throw new NotImplementedException();
+//        throw new NotImplementedException();
+        this.lrTable = table;
     }
 
     public void run() {
@@ -94,6 +99,50 @@ public class SyntaxAnalyzer {
         // 你需要根据上面的输入来实现 LR 语法分析的驱动程序
         // 请分别在遇到 Shift, Reduce, Accept 的时候调用上面的 callWhenInShift, callWhenInReduce, callWhenInAccept
         // 否则用于为实验二打分的产生式输出可能不会正常工作
-        throw new NotImplementedException();
+//        throw new NotImplementedException();
+        int i = 0;
+        Boolean flag = Boolean.FALSE;
+        statusStack.push(lrTable.getInit());
+        symbolStack.push(new Symbol(Token.eof()));
+        while(true){
+            if(flag){
+                break;
+            }
+            Token token = tokens.get(i);
+            Status nowStatus = statusStack.peek();
+            Action nowAction = nowStatus.getAction(token);
+//            System.out.println("nowToken = "+token+"nowStatus = "+nowStatus+"nowAction = "+nowAction);
+            switch (nowAction.getKind()){
+                case Shift -> {
+                    System.out.println("IN SHIFT nowToken = "+token+"nowStatus = "+nowStatus+"nowAction = "+nowAction);
+                    symbolStack.push(new Symbol(token));
+                    statusStack.push(nowAction.getStatus());
+                    callWhenInShift(statusStack.peek(), symbolStack.peek().getToken());
+                    i++;
+                }
+                case Reduce -> {
+                    System.out.println("IN REDUCE BEGIN nowToken = "+token+"nowStatus = "+nowStatus+"nowAction = "+nowAction);
+                    final var production = nowAction.getProduction();
+
+                    int sizeOfBody = production.body().size();
+                    System.out.println("production.body().size() = "+production.body().size());
+                    for(int j = 0 ; j < sizeOfBody ; j++){
+                        symbolStack.pop();
+                        statusStack.pop();
+                    }
+                    symbolStack.push(new Symbol(null, production.head()));
+                    System.out.println("statusStack.peek() = "+statusStack.peek()+"symbolStack.peek().getNonterminal() = "+ symbolStack.peek().getNonterminal());
+                    System.out.println("goto = "+ lrTable.getGoto(statusStack.peek(), symbolStack.peek().getNonterminal()));
+                    statusStack.push(lrTable.getGoto(statusStack.peek(), symbolStack.peek().getNonterminal()));
+                    callWhenInReduce(statusStack.peek(), production);
+                    System.out.println("IN REDUCE END nowToken = "+token+" nowStatusStack = "+statusStack+" nowSymbolStackPeek() = "+symbolStack.peek().getNonterminal());
+                }
+                case Accept -> {
+                    System.out.println("IN ACCEPT nowToken = "+token+"nowStatus = "+nowStatus+"nowAction = "+nowAction);
+                    System.out.println("Success");
+                    flag = Boolean.TRUE;
+                }
+            }
+        }
     }
 }
