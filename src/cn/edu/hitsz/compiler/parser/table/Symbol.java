@@ -12,7 +12,9 @@ public class Symbol{
     }
 
     public Symbol(Token token){
-        new Symbol(token, null);
+//        new Symbol(token, null);
+        this.token = token;
+        this.nonTerminal = null;
     }
 
     public Symbol(NonTerminal nonTerminal){

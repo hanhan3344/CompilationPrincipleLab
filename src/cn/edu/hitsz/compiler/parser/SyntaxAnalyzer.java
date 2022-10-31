@@ -116,8 +116,11 @@ public class SyntaxAnalyzer {
                 case Shift -> {
 //                    System.out.println("IN SHIFT nowToken = "+token+"nowStatus = "+nowStatus+"nowAction = "+nowAction);
                     symbolStack.push(new Symbol(token));
+//                    System.out.println("---------------------");
+//                    System.out.println(new Symbol(token).getToken());
                     statusStack.push(nowAction.getStatus());
                     callWhenInShift(statusStack.peek(), symbolStack.peek().getToken());
+//                    System.out.println(symbolStack);
                     i++;
                 }
                 case Reduce -> {

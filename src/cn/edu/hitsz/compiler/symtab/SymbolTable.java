@@ -3,10 +3,7 @@ package cn.edu.hitsz.compiler.symtab;
 import cn.edu.hitsz.compiler.NotImplementedException;
 import cn.edu.hitsz.compiler.utils.FileUtils;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * 符号表
@@ -26,7 +23,15 @@ public class SymbolTable {
      * @throws RuntimeException 该符号在表中不存在
      */
     public SymbolTableEntry get(String text) {
-        throw new NotImplementedException();
+//        throw new NotImplementedException();
+        SymbolTableEntry res = null;
+        for (String key: entries.keySet()){
+            if(key.equals(text)){
+                res = entries.get(key);
+            }
+        }
+
+        return res;
     }
 
     /**
@@ -72,6 +77,10 @@ public class SymbolTable {
         return entries;
     }
 
+    public ArrayList<SymbolTableEntry> getSymbolList(){
+        return new ArrayList<>(getAllEntries().values());
+    }
+
     /**
      * 将符号表按格式输出
      *
@@ -79,6 +88,10 @@ public class SymbolTable {
      */
     public void dumpTable(String path) {
         final var entriesInOrder = new ArrayList<>(getAllEntries().values());
+//        System.out.println("###################################################");
+//        for (final var entry : entriesInOrder) {
+//            System.out.println("(%s, %s)".formatted(entry.getText(), entry.getType()));
+//        }
         entriesInOrder.sort(Comparator.comparing(SymbolTableEntry::getText));
 
         final var lines = new ArrayList<String>();
