@@ -33,7 +33,7 @@ public class IRGenerator implements ActionObserver {
         // TODO
 //        throw new NotImplementedException();
 //        System.out.println("IR shift");
-        System.out.println(currentToken);
+//        System.out.println(currentToken);
         if (currentToken.getKindId().equals("Semicolon")){
             while(!varStack.empty()){
                 varStack.pop();
@@ -70,7 +70,7 @@ public class IRGenerator implements ActionObserver {
     public void whenReduce(Status currentStatus, Production production) {
         // TODO
 //        throw new NotImplementedException();
-        System.out.println("IR reduce " + production);
+//        System.out.println("IR reduce " + production);
         switch (production.index()){
             case 1 -> { //P->S_list
 
