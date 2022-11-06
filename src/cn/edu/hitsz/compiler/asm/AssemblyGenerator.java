@@ -1,9 +1,17 @@
 package cn.edu.hitsz.compiler.asm;
 
 import cn.edu.hitsz.compiler.NotImplementedException;
+import cn.edu.hitsz.compiler.ir.IRImmediate;
+import cn.edu.hitsz.compiler.ir.IRValue;
+import cn.edu.hitsz.compiler.ir.IRVariable;
 import cn.edu.hitsz.compiler.ir.Instruction;
+import cn.edu.hitsz.compiler.lexer.Token;
+import cn.edu.hitsz.compiler.utils.FileUtils;
 
+import java.nio.file.FileAlreadyExistsException;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.StreamSupport;
 
 
 /**
@@ -22,6 +30,11 @@ import java.util.List;
  */
 public class AssemblyGenerator {
 
+
+    private List<Instruction> instructions = new ArrayList<>();
+    private ArrayList<String> result = new ArrayList<>();
+    private BMap<Integer, IRVariable> map = new BMap<>();
+    private int tempIRValue = 114;
     /**
      * 加载前端提供的中间代码
      * <br>
@@ -32,7 +45,8 @@ public class AssemblyGenerator {
      */
     public void loadIR(List<Instruction> originInstructions) {
         // TODO: 读入前端提供的中间代码并生成所需要的信息
-        throw new NotImplementedException();
+//        throw new NotImplementedException();
+        this.instructions = originInstructions;
     }
 
 
@@ -47,7 +61,65 @@ public class AssemblyGenerator {
      */
     public void run() {
         // TODO: 执行寄存器分配与代码生成
-        throw new NotImplementedException();
+//        throw new NotImplementedException();
+        for (int i = 0 ; i < instructions.size() ; i++){
+            Instruction ins = instructions.get(i);
+            switch(ins.getKind()){
+                case MOV -> {
+//                    System.out.println(ins);
+                    if(ins.getFrom().isImmediate()){
+                        IRImmediate rhs = (IRImmediate) ins.getFrom();
+                        IRVariable lhs = (IRVariable) ins.getResult();
+                        int rd;
+                        result.add("li t%s, %s".formatted(getReg(i, lhs), rhs.getValue()));
+                    }else{
+                        IRVariable rhs = (IRVariable) ins.getFrom();
+                        IRVariable lhs = (IRVariable) ins.getResult();
+                        int rd;
+                        if(map.containsValue(lhs)){
+                            rd = map.getByValue(lhs);
+                        }else{
+                            rd = getReg(i, lhs);
+                        }
+                        result.add("mv t%s, t%s".formatted(rd, map.getByValue(rhs)));
+                    }
+//                    System.out.println(result);
+                }
+                case SUB -> {
+//                    System.out.println(ins);
+                    if(ins.getLHS().isImmediate()) {
+                        IRVariable res = ins.getResult();
+                        IRImmediate lhs = (IRImmediate) ins.getLHS();
+                        IRVariable rhs = (IRVariable) ins.getRHS();
+                        int rs1 = getReg(i, IRVariable.named("tempIRVariable%d".formatted(tempIRValue)));
+                        result.add("li t%s, %s".formatted(rs1, lhs.getValue()));
+                        result.add("sub t%s, t%s, t%s".formatted(getReg(i, ins.getResult()), rs1, map.getByValue(rhs)));
+//                        System.out.println(result);
+                    }else{
+                        result.add("sub t%s, t%s, t%s".formatted(getReg(i, ins.getResult()), getReg(i, (IRVariable) ins.getLHS()), getReg(i, (IRVariable) ins.getRHS())));
+                    }
+                }
+                case MUL -> {
+//                    System.out.println(ins);
+
+                    result.add("mul t%s, t%s, t%s".formatted(getReg(i, ins.getResult()), getReg(i, (IRVariable) ins.getLHS()), getReg(i, (IRVariable) ins.getRHS())));
+//                    System.out.println(result);
+                }
+                case ADD -> {
+//                    System.out.println(ins);
+                    if(ins.getRHS().isImmediate()){
+                        IRImmediate rhs = (IRImmediate) ins.getRHS();
+                        result.add("addi t%s, t%s, %s".formatted(getReg(i, ins.getResult()), getReg(i, (IRVariable) ins.getLHS()), rhs.getValue()));
+                    } else if (ins.getLHS().isImmediate()) {
+                        IRImmediate lhs = (IRImmediate) ins.getLHS();
+                        result.add("addi t%s, t%s, %s".formatted(getReg(i, ins.getResult()), getReg(i, (IRVariable) ins.getRHS()), lhs.getValue()));
+                    }
+                }
+                case RET -> {
+                    result.add("mv a0, t%s".formatted(map.getByValue((IRVariable) ins.getReturnValue())));
+                }
+            }
+        }
     }
 
 
@@ -58,7 +130,73 @@ public class AssemblyGenerator {
      */
     public void dump(String path) {
         // TODO: 输出汇编代码到文件
-        throw new NotImplementedException();
+//        throw new NotImplementedException();
+//        System.out.println(result);
+        FileUtils.writeLines(
+                path,
+                result.stream().toList()
+        );
+    }
+
+
+    private int getReg(int ins_num, IRVariable ins_IR){
+        int res = -1;
+        if(map.containsValue(ins_IR)){
+            return map.getByValue(ins_IR);
+        }
+        int i;
+        boolean flag = Boolean.TRUE;
+        for(i = 0 ; i < 7 ; i++){
+            if(!map.containsKey(i)){
+                res = i;
+                flag = Boolean.FALSE;
+                break;
+            }
+        }
+        if(flag){ // 无空闲寄存器
+//            System.out.println("flag = true");
+            boolean total_will_use = Boolean.TRUE;
+            for(i = 0 ; i < 7 && total_will_use; i++){
+//                System.out.printf("now reg t%s%n", i);
+                boolean will_use = Boolean.FALSE;
+                IRVariable irVariable = map.getByKey(i);
+                for(int j = ins_num;j<instructions.size() && !will_use;j++){
+
+                    Instruction ins = instructions.get(j);
+//                    System.out.println("now ins %s".formatted(ins));
+                    switch (ins.getKind()){
+                        case MOV -> {
+                            if(irVariable.equals(ins.getResult()) || irVariable.equals(ins.getFrom())){
+                                will_use = Boolean.TRUE;
+                            }
+                        }
+                        case RET -> {
+                            if(irVariable.equals(ins.getReturnValue())){
+                                will_use = Boolean.TRUE;
+                            }
+                        }
+                        default -> {
+                            if(irVariable.equals(ins.getResult()) || irVariable.equals(ins.getLHS()) || irVariable.equals(ins.getRHS())){
+                                will_use = Boolean.TRUE;
+                            }
+                        }
+                    }
+                }
+                if(!will_use){
+                    total_will_use = Boolean.FALSE;
+                    res = i;
+                }
+            }
+            if(total_will_use){
+                System.out.println("Error!!!!!!!!!!!!!!!!!!!!!!");
+                System.exit(0);
+            }
+        }
+        if(res != -1){
+            map.replace(res, ins_IR);
+        }
+
+        return res;
     }
 }
 
