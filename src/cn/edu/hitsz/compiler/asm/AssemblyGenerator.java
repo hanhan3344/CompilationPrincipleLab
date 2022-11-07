@@ -95,7 +95,10 @@ public class AssemblyGenerator {
                         result.add("li t%s, %s".formatted(rs1, lhs.getValue()));
                         result.add("sub t%s, t%s, t%s".formatted(getReg(i, ins.getResult()), rs1, map.getByValue(rhs)));
 //                        System.out.println(result);
-                    }else{
+                    }else if (ins.getRHS().isImmediate()){
+                        IRImmediate rhs = (IRImmediate) ins.getRHS();
+                        result.add("subi t%s, t%s, %s".formatted(getReg(i, ins.getResult()), getReg(i, (IRVariable) ins.getLHS()), rhs.getValue()));
+                    } else {
                         result.add("sub t%s, t%s, t%s".formatted(getReg(i, ins.getResult()), getReg(i, (IRVariable) ins.getLHS()), getReg(i, (IRVariable) ins.getRHS())));
                     }
                 }
@@ -113,6 +116,8 @@ public class AssemblyGenerator {
                     } else if (ins.getLHS().isImmediate()) {
                         IRImmediate lhs = (IRImmediate) ins.getLHS();
                         result.add("addi t%s, t%s, %s".formatted(getReg(i, ins.getResult()), getReg(i, (IRVariable) ins.getRHS()), lhs.getValue()));
+                    } else {
+                        result.add("add t%s, t%s, t%s".formatted(getReg(i, ins.getResult()), getReg(i, (IRVariable) ins.getLHS()), getReg(i, (IRVariable) ins.getRHS())));
                     }
                 }
                 case RET -> {
